@@ -44,16 +44,6 @@ class sprayDroneSimulation:
                     initY = (initY + 1) % self.size
 
             grid[initX, initY] = (grid[initX, initY] + 1) % 20
-        
-    def runSimulation(self):
-        for i in range(100):
-            xplane1, xplane2, xplane3, yplane = int(self.size * 0.25), int(self.size * 0.5), int(self.size * 0.75),  (self.size - 30) - 2*i
-            frameWithPlane1 = self.__movePlane(self.initial_frame, xplane1, yplane)
-            frameWithPlane2 = self.__movePlane(frameWithPlane1, xplane2, yplane)
-            frameWithPlane3 = self.__movePlane(frameWithPlane2, xplane3, yplane)
-            self.frameStore.append(frameWithPlane3)
-            print(xplane1, yplane)
-            print(xplane2, yplane)
     
     def __movePlane(self, arr, xpos, ypos, size=25):
         s = size // 2
@@ -69,6 +59,19 @@ class sprayDroneSimulation:
         temp[ypos+s-1:ypos+s, xpos-s//2:xpos+s//2] = self.PLANE
 
         return temp
+    
+    def runSimulation(self, num_plane):
+        for i in range(100):
+            yplane = (self.size - 30) - 2*i
+            xcoodinates = []
+            for n in range(num_plane):
+                xcoodinates.append(int(self.size * (n+1) / (num_plane + 1)))
+            
+            f = self.__movePlane(self.initial_frame, xcoodinates[0], yplane)
+            for j in range(1, num_plane):
+                f = self.__movePlane(f, xcoodinates[j], yplane)
+            
+            self.frameStore.append(f)
     
     def saveAnimation(self, name):
         fig, ax = plt.subplots()
@@ -86,5 +89,5 @@ class sprayDroneSimulation:
         plt.show()
 
 modsim = sprayDroneSimulation(farm_size=256)
-modsim.runSimulation()
+modsim.runSimulation(num_plane=4)
 modsim.saveAnimation(name="hai.gif")
