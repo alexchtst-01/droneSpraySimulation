@@ -47,9 +47,11 @@ class sprayDroneSimulation:
         
     def runSimulation(self):
         for i in range(100):
-            xplane1, xplane2, yplane = self.size // 2, self.size // 4,  (self.size - 30) - 2*i
-            self.frameStore.append(self.__movePlane(self.initial_frame, xplane1, yplane))
-            self.frameStore.append(self.__movePlane(self.initial_frame, xplane2, yplane))
+            xplane1, xplane2, xplane3, yplane = int(self.size * 0.25), int(self.size * 0.5), int(self.size * 0.75),  (self.size - 30) - 2*i
+            frameWithPlane1 = self.__movePlane(self.initial_frame, xplane1, yplane)
+            frameWithPlane2 = self.__movePlane(frameWithPlane1, xplane2, yplane)
+            frameWithPlane3 = self.__movePlane(frameWithPlane2, xplane3, yplane)
+            self.frameStore.append(frameWithPlane3)
             print(xplane1, yplane)
             print(xplane2, yplane)
     
