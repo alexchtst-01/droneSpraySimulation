@@ -1,1 +1,6 @@
 __pycache__
+*.ipynb
+test.py 
+res
+*gif
+utils.py

@@ -2,51 +2,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
+from tqdm import tqdm
 
 class sprayDroneSimulation:
-    def __init__(self, farm_size, simulation_result_dir=None, savingMode=False):
+    def __init__(self, farm_size, simulation_result_dir=None, savingMode=False, planeSize=25):
         self.simulation_result_dir = simulation_result_dir
-        self.save = savingMode
+        self.savingMode = savingMode
         
         self.LOWEST = 0
         self.PLANE = 1
-        self.HARVEST = 2
+        self.HARVEST = 9
         self.HIGHEST = 10
         
         self.frameStore = []
         self.size = farm_size
+        self.planeSize = planeSize
         
-        self.initial_frame = np.zeros(shape=(self.size, self.size))
+        self.inital_random_points = []
+        self.initial_frame = np.ones(shape=(self.size, self.size)) * self.HARVEST
+        self.__temp = np.ones(shape=(self.size, self.size)) * self.HARVEST
+        
+        if self.planeSize < 12:
+            print("minimun size of the plane in 12")
         
     
-    def createInitialFarm(self, size):
-        grid = np.ones(shape=(size+1, size+1)) * self.HARVEST
-        return grid
-    
-    def __RandomWalk(self, initX, initY, steps):
-        for _ in range(step):
-            # gerakan horizontal
+    def __RandomWalk(self, arr, xpos, ypos):
+        arr[xpos, ypos] = 1
+        
+        # arah horizontal
+        if random.random() < 0.5:
             if random.random() < 0.5:
-                # ke kanan
-                if random.random() < 0.5:
-                    initX = (initX + 1) % self.size
+                # kekanan
+                x = min(self.size-1, x+1)
+            else:
                 # kekiri
-                else:
-                    initX = (initX - 1) % self.size
-            
-            # gerakan vertikal
-            else: 
-                # keatas
-                if random.random() < 0.5:
-                    initY = (initY - 1) % self.size
+                x = min(self.size-1, x-1)
+        
+        # arah vertikal
+        else:
+            if random.random() < 0.5:
                 # kebawah
-                else:
-                    initY = (initY + 1) % self.size
-
-            grid[initX, initY] = (grid[initX, initY] + 1) % 20
+                y = min(self.size-1, y+1)
+            else:
+                # keatas
+                y = min(self.size-1, y-1)
+        
+        arr[x, y] += 1
     
-    def __movePlane(self, arr, xpos, ypos, size=25):
-        s = size // 2
+    def __movePlane(self, arr, xpos, ypos):
+        s = self.planeSize // 2
         temp = arr.copy()
         # badan pesawat
         temp[ypos-s:ypos+s-2, xpos-int(s*0.2):xpos+int(s*0.2)] = self.PLANE
@@ -60,20 +64,27 @@ class sprayDroneSimulation:
 
         return temp
     
-    def runSimulation(self, num_plane):
-        for i in range(100):
-            yplane = (self.size - 30) - 2*i
+    def runSimulation(self, num_plane, state, vel=3, steps=600):
+        for i in tqdm(range(steps)):
+            yplane = max((self.size - self.planeSize) - i*vel, self.planeSize)
             xcoodinates = []
             for n in range(num_plane):
                 xcoodinates.append(int(self.size * (n+1) / (num_plane + 1)))
             
-            f = self.__movePlane(self.initial_frame, xcoodinates[0], yplane)
+            f = self.__movePlane(self.__temp, xcoodinates[0], yplane)
             for j in range(1, num_plane):
                 f = self.__movePlane(f, xcoodinates[j], yplane)
             
+            if state(i):
+                for j in range(num_plane):
+                    x = xcoodinates[j]
+                    y = yplane
+                    self.__temp[y, x] -= 5
+                    # self.__temp[y, x + self.planeSize//2] -= 5
+            
             self.frameStore.append(f)
     
-    def saveAnimation(self, name):
+    def Animation(self, name=None):
         fig, ax = plt.subplots()
         ax.axis('off')
         
@@ -85,9 +96,12 @@ class sprayDroneSimulation:
         im = ax.imshow(self.initial_frame, vmin=0, vmax=self.HARVEST+1)
         ani = FuncAnimation(fig, update, frames=len(self.frameStore), interval=50)
         
+        if self.savingMode:
+            ani.save(f"{self.simulation_result_dir}/{name}")
+            
         plt.axis('off')
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=256)
-modsim.runSimulation(num_plane=4)
-modsim.saveAnimation(name="hai.gif")
+modsim = sprayDroneSimulation(farm_size=256, simulation_result_dir="res", planeSize=25, savingMode=True)
+modsim.runSimulation(num_plane=2, vel=1, state=lambda i : i % 20 > 10)
+modsim.Animation(name="testlagi.gif")
