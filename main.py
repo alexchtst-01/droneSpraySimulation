@@ -27,27 +27,28 @@ class sprayDroneSimulation:
         
     
     def __RandomWalk(self, arr, xpos, ypos):
-        arr[xpos, ypos] = 1
-        
+        grid = arr.copy()        
         # arah horizontal
         if random.random() < 0.5:
             if random.random() < 0.5:
                 # kekanan
-                x = min(self.size-1, x+1)
+                xpos = min(self.size-1, xpos+1)
             else:
                 # kekiri
-                x = min(self.size-1, x-1)
+                xpos = min(self.size-1, xpos-1)
         
         # arah vertikal
         else:
             if random.random() < 0.5:
                 # kebawah
-                y = min(self.size-1, y+1)
+                ypos = min(self.size-1, ypos+1)
             else:
                 # keatas
-                y = min(self.size-1, y-1)
+                ypos = min(self.size-1, ypos-1)
         
-        arr[x, y] += 1
+        grid[xpos, ypos] -= 5
+        
+        return grid
     
     def __movePlane(self, arr, xpos, ypos):
         s = self.planeSize // 2
@@ -79,10 +80,10 @@ class sprayDroneSimulation:
                 for j in range(num_plane):
                     x = xcoodinates[j]
                     y = yplane
-                    self.__temp[y, x] -= 5
-                    # self.__temp[y, x + self.planeSize//2] -= 5
-            
+                    self.__temp= self.__RandomWalk(self.__temp, y, x + self.planeSize//2)
+                    self.__temp= self.__RandomWalk(self.__temp, y, x - self.planeSize//2)
             self.frameStore.append(f)
+    
     
     def Animation(self, name=None):
         fig, ax = plt.subplots()
@@ -102,6 +103,6 @@ class sprayDroneSimulation:
         plt.axis('off')
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=256, simulation_result_dir="res", planeSize=25, savingMode=True)
+modsim = sprayDroneSimulation(farm_size=128, simulation_result_dir="res", planeSize=12)
 modsim.runSimulation(num_plane=2, vel=1, state=lambda i : i % 20 > 10)
 modsim.Animation(name="testlagi.gif")
