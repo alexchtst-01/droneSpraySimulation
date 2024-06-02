@@ -20,7 +20,6 @@ class sprayDroneSimulation:
         self.planeSize = planeSize
         self.planeHeight = planeHeight
         
-        self.inital_random_points = []
         self.initial_frame = np.ones(shape=(self.size, self.size)) * self.HARVEST
         self.__temp = np.ones(shape=(self.size, self.size)) * self.HARVEST
         self.farm = np.ones(shape=(self.size, self.size)) * self.HARVEST
@@ -89,32 +88,44 @@ class sprayDroneSimulation:
             
             self.frameStore.append(f)
     
-    def inspectFarmCondition(self):
-        mat = self.farm < self.HARVEST
+    def vertilizerPercentage(self):
+        l = []
+        for item in self.farmGrids:
+            l.append(self.inspectFarmCondition(item))
+        return l
+    
+    def inspectFarmCondition(self, arr):
+        mat = arr < self.HARVEST
         mat = mat * 1
         return np.count_nonzero(mat) / (self.size**2)
     
     def Animation(self, name=None):
-        fig, ax = plt.subplots(1, 2)
-        ax.axis('off')
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+        ax[0].set_title("simulasi")
+        ax[1].set_title("Grafik bagian tanaman yang sudah terkena pupuk")
         
-        def update(frame_idx):
-            im.set_array(self.frameStore[frame_idx])
-            return [im]
+        ax[0].axis('off')
+        ax[1].set_ylim(0, 1)
+        ax[1].set_xlim(0, len(self.vertilizerPercentage()))
         
-        initial_frame = self.frameStore[0]
-        im = ax.imshow(self.initial_frame, vmin=0, vmax=self.HARVEST+1)
+        t = np.arange(len(self.vertilizerPercentage()))
+        line = ax[1].plot([], [])
+        
+        im = ax[0].imshow(self.initial_frame, vmin=0, vmax=self.HARVEST+1)
+        line, = ax[1].plot([], [])
+        
+        def update(idx):
+            im.set_array(self.frameStore[idx])
+            line.set_data(t[:idx], self.vertilizerPercentage()[:idx])
+            return [im], line
+        
         ani = FuncAnimation(fig, update, frames=len(self.frameStore), interval=50)
         
         if self.savingMode:
             ani.save(f"{self.simulation_result_dir}/{name}")
             
-        plt.axis('off')
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, distance=12)
-modsim.runSimulation(num_plane=5, vel=1, state=lambda i : i % 20 > 0)
+modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=30)
+modsim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
 modsim.Animation(name="testlagi.gif")
-print(modsim.inspectFarmCondition())
-print(len(modsim.frameStore))
-print(len(modsim.farmGrids))
