@@ -28,27 +28,20 @@ class sprayDroneSimulation:
     
     def __RandomWalk(self, arr, xpos, ypos):
         grid = arr.copy()        
-        # arah horizontal
         if random.random() < 0.5:
             if random.random() < 0.5:
-                # kekanan
-                xpos = min(self.size-1, xpos+1)
+                xpos = max(0, min(self.size-1, xpos+2))
             else:
-                # kekiri
-                xpos = min(self.size-1, xpos-1)
-        
-        # arah vertikal
+                xpos = max(0, min(self.size-1, xpos-2))        
         else:
             if random.random() < 0.5:
-                # kebawah
-                ypos = min(self.size-1, ypos+1)
+                ypos = max(0, min(self.size-1, ypos+2))
             else:
-                # keatas
-                ypos = min(self.size-1, ypos-1)
+                ypos = max(0, min(self.size-1, ypos-2))
         
-        grid[xpos, ypos] -= 5
+        grid[ypos-1:ypos+1, xpos-1:xpos+1] -= 0.5
         
-        return grid
+        return grid, xpos, ypos
     
     def __movePlane(self, arr, xpos, ypos):
         s = self.planeSize // 2
@@ -65,8 +58,8 @@ class sprayDroneSimulation:
 
         return temp
     
-    def runSimulation(self, num_plane, state, vel=3, steps=600):
-        for i in tqdm(range(steps)):
+    def runSimulation(self, num_plane, state, vel=3, steps=200):
+        for i in tqdm(range(steps - self.planeSize)):
             yplane = max((self.size - self.planeSize) - i*vel, self.planeSize)
             xcoodinates = []
             for n in range(num_plane):
@@ -76,14 +69,12 @@ class sprayDroneSimulation:
             for j in range(1, num_plane):
                 f = self.__movePlane(f, xcoodinates[j], yplane)
             
-            if state(i):
-                for j in range(num_plane):
-                    x = xcoodinates[j]
+            for x in xcoodinates:
+                if state(i):
                     y = yplane
-                    self.__temp= self.__RandomWalk(self.__temp, y, x + self.planeSize//2)
-                    self.__temp= self.__RandomWalk(self.__temp, y, x - self.planeSize//2)
+                    for _ in range(20):
+                        self.__temp, x, y = self.__RandomWalk(self.__temp, x, y)
             self.frameStore.append(f)
-    
     
     def Animation(self, name=None):
         fig, ax = plt.subplots()
@@ -103,6 +94,7 @@ class sprayDroneSimulation:
         plt.axis('off')
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=128, simulation_result_dir="res", planeSize=12)
-modsim.runSimulation(num_plane=2, vel=1, state=lambda i : i % 20 > 10)
+modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12)
+modsim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
 modsim.Animation(name="testlagi.gif")
+# print(len(modsim.inital_random_points))
