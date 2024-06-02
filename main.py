@@ -5,7 +5,7 @@ import random
 from tqdm import tqdm
 
 class sprayDroneSimulation:
-    def __init__(self, farm_size, simulation_result_dir=None, savingMode=False, planeSize=25):
+    def __init__(self, farm_size, simulation_result_dir=None, savingMode=False, planeSize=25, distance=0, planeHeight=10):
         self.simulation_result_dir = simulation_result_dir
         self.savingMode = savingMode
         
@@ -15,31 +15,35 @@ class sprayDroneSimulation:
         self.HIGHEST = 10
         
         self.frameStore = []
+        self.farmGrids = []
         self.size = farm_size
         self.planeSize = planeSize
+        self.planeHeight = planeHeight
         
         self.inital_random_points = []
         self.initial_frame = np.ones(shape=(self.size, self.size)) * self.HARVEST
         self.__temp = np.ones(shape=(self.size, self.size)) * self.HARVEST
+        self.farm = np.ones(shape=(self.size, self.size)) * self.HARVEST
+        self.dist = distance
         
         if self.planeSize < 12:
             print("minimun size of the plane in 12")
         
     
     def __RandomWalk(self, arr, xpos, ypos):
-        grid = arr.copy()        
+        grid = arr.copy()
         if random.random() < 0.5:
             if random.random() < 0.5:
-                xpos = max(0, min(self.size-1, xpos+2))
+                xpos = max(0, min(self.size-1, xpos+1))
             else:
-                xpos = max(0, min(self.size-1, xpos-2))        
+                xpos = max(0, min(self.size-1, xpos-1))
         else:
             if random.random() < 0.5:
-                ypos = max(0, min(self.size-1, ypos+2))
+                ypos = max(0, min(self.size-1, ypos+1))
             else:
-                ypos = max(0, min(self.size-1, ypos-2))
+                ypos = max(0, min(self.size-1, ypos-1))
         
-        grid[ypos-1:ypos+1, xpos-1:xpos+1] -= 0.5
+        grid[ypos-1:ypos+1, xpos-1:xpos+1] -= 0.05
         
         return grid, xpos, ypos
     
@@ -59,7 +63,7 @@ class sprayDroneSimulation:
         return temp
     
     def runSimulation(self, num_plane, state, vel=3, steps=200):
-        for i in tqdm(range(steps - self.planeSize)):
+        for i in tqdm(range(steps - self.planeSize - 1)):
             yplane = max((self.size - self.planeSize) - i*vel, self.planeSize)
             xcoodinates = []
             for n in range(num_plane):
@@ -72,12 +76,26 @@ class sprayDroneSimulation:
             for x in xcoodinates:
                 if state(i):
                     y = yplane
-                    for _ in range(20):
+                    for _ in range(self.planeHeight):
+                        self.__temp, x, y = self.__RandomWalk(self.__temp, x+self.planeSize//3+self.dist, y)
                         self.__temp, x, y = self.__RandomWalk(self.__temp, x, y)
+                        self.__temp, x, y = self.__RandomWalk(self.__temp, x-self.planeSize//3-self.dist, y)
+                        
+                        self.farm, x, y = self.__RandomWalk(self.farm, x+self.planeSize//3+self.dist, y)
+                        self.farm, x, y = self.__RandomWalk(self.farm, x, y)
+                        self.farm, x, y = self.__RandomWalk(self.farm, x-self.planeSize//3-self.dist, y)
+                    
+            self.farmGrids.append(self.farm)
+            
             self.frameStore.append(f)
     
+    def inspectFarmCondition(self):
+        mat = self.farm < self.HARVEST
+        mat = mat * 1
+        return np.count_nonzero(mat) / (self.size**2)
+    
     def Animation(self, name=None):
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(1, 2)
         ax.axis('off')
         
         def update(frame_idx):
@@ -94,7 +112,9 @@ class sprayDroneSimulation:
         plt.axis('off')
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12)
-modsim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
+modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, distance=12)
+modsim.runSimulation(num_plane=5, vel=1, state=lambda i : i % 20 > 0)
 modsim.Animation(name="testlagi.gif")
-# print(len(modsim.inital_random_points))
+print(modsim.inspectFarmCondition())
+print(len(modsim.frameStore))
+print(len(modsim.farmGrids))
