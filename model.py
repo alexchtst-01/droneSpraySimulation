@@ -101,7 +101,7 @@ class sprayAircraft:
     
     def Animation(self, name=None):
         fig, ax = plt.subplots(1, 2, figsize=(12, 6))
-        ax[0].set_title(f"{name}")
+        ax[0].set_title("Simulation")
         ax[1].set_title("Percentage of Fertilizer on the Farm")
         
         ax[0].axis('off')
