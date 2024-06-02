@@ -88,7 +88,7 @@ class sprayDroneSimulation:
             
             self.frameStore.append(f)
     
-    def vertilizerPercentage(self):
+    def fertilizerPercentage(self):
         l = []
         for item in self.farmGrids:
             l.append(self.inspectFarmCondition(item))
@@ -100,15 +100,17 @@ class sprayDroneSimulation:
         return np.count_nonzero(mat) / (self.size**2)
     
     def Animation(self, name=None):
-        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-        ax[0].set_title("simulasi")
-        ax[1].set_title("Grafik bagian tanaman yang sudah terkena pupuk")
+        fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+        ax[0].set_title(f"{name}")
+        ax[1].set_title("Percentage of Fertilizer on the Farm")
         
         ax[0].axis('off')
+        ax[1].set_xlabel("Time")
+        ax[1].set_ylabel("Coverage")
         ax[1].set_ylim(0, 1)
-        ax[1].set_xlim(0, len(self.vertilizerPercentage()))
+        ax[1].set_xlim(0, len(self.fertilizerPercentage()))
         
-        t = np.arange(len(self.vertilizerPercentage()))
+        t = np.arange(len(self.fertilizerPercentage()))
         line = ax[1].plot([], [])
         
         im = ax[0].imshow(self.initial_frame, vmin=0, vmax=self.HARVEST+1)
@@ -116,7 +118,7 @@ class sprayDroneSimulation:
         
         def update(idx):
             im.set_array(self.frameStore[idx])
-            line.set_data(t[:idx], self.vertilizerPercentage()[:idx])
+            line.set_data(t[:idx], self.fertilizerPercentage()[:idx])
             return [im], line
         
         ani = FuncAnimation(fig, update, frames=len(self.frameStore), interval=50)
@@ -126,6 +128,31 @@ class sprayDroneSimulation:
             
         plt.show()
 
-modsim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=30)
-modsim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
-modsim.Animation(name="testlagi.gif")
+#Simulate all cases
+#Case 1 for planeHeight = 30 and num_plane = 8
+first_sim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=30) 
+first_sim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
+first_sim.Animation(name="planeHeight = 30 and num_plane = 8")
+first_sim_coverage = first_sim.fertilizerPercentage()
+print(f"Coverage : {first_sim_coverage[-1]}")
+
+#Case 2 for planeHeight = 15 and num_plane = 8
+second_sim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=15)
+second_sim.runSimulation(num_plane=8, vel=1, state=lambda i : i % 20 > 0)
+second_sim.Animation(name="planeHeight = 15 and num_plane = 8")
+second_sim_coverage = second_sim.fertilizerPercentage()
+print(f"Coverage : {second_sim_coverage[-1]}")
+
+#Case 3 for planeHeight = 15 and num_plane = 4
+third_sim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=15)
+third_sim.runSimulation(num_plane=4, vel=1, state=lambda i : i % 20 > 0)
+third_sim.Animation(name="planeHeight = 15 and num_plane = 4")
+third_sim_coverage = first_sim.fertilizerPercentage()
+print(f"Coverage : {third_sim_coverage[-1]}")
+
+#Case 4 for planeHeight = 30 and num_plane = 4
+fourth_sim = sprayDroneSimulation(farm_size=200, simulation_result_dir="res", planeSize=12, planeHeight=30)
+fourth_sim.runSimulation(num_plane=4, vel=1, state=lambda i : i % 20 > 0)
+fourth_sim.Animation(name="planeHeight = 30 and num_plane = 4")
+fourth_sim_coverage = fourth_sim.fertilizerPercentage()
+print(f"Coverage : {fourth_sim_coverage[-1]}")
